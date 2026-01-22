@@ -7,7 +7,7 @@ import {
   getUserProjects,
   purchaseCredits,
   togglePublish,
-} from "../controllers/userController.ts";
+} from "../controllers/userController.js";
 
 const userRouter = express.Router();
 
