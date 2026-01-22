@@ -1,8 +1,9 @@
 import express, { Request, Response } from 'express';
 import 'dotenv/config'
 import cors from 'cors'
-import { toNodeHandler } from 'better-auth/node';
-import { auth } from './lib/auth.js';
+// import { toNodeHandler } from 'better-auth/node';
+// import { auth } from './lib/auth.js';
+import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import projectRouter from './routes/projectRoutes.js';
 import { stripeWebhook } from './controllers/stripeWebhooks.js';
@@ -19,7 +20,8 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.post('/api/stripe',express.raw({type: 'application/json'}), stripeWebhook)
 
-app.all('/api/auth/*', toNodeHandler(auth));
+app.use('/api/auth', authRouter);
+
 app.use(express.json({limit: '50mb'}))
 
 app.get('/', (req: Request, res: Response) => {
