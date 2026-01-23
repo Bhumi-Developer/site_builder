@@ -15,7 +15,7 @@ const port = 3000;
 
 app.use(cors(
    {
-        origin: process.env.TRUSTED_ORIGINS?.split(',') || [],
+        origin: 'http://localhost:5173',
         credentials: true,
     }
 ))
