@@ -8,7 +8,7 @@ const trustedOrigins = process.env.TRUSTED_ORIGINS?.split(',') || []
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
-        provider: "sqlite", // or "mysql", "postgresql", ...etc
+        provider: "postgresql",
     }),
     emailAndPassword: { 
         enabled: true, 
