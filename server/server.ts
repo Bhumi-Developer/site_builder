@@ -11,11 +11,12 @@ const app = express();
 
 const port = 3000;
 
-
+const url = process.env.TRUSTED_ORIGINS
+console.log(url)
 
 app.use(cors(
    {
-        origin: 'http://localhost:5173',
+        origin: url,
         credentials: true,
     }
 ))
