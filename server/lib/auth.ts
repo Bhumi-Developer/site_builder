@@ -4,7 +4,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import  prisma  from "./prisma.js";
 // If your Prisma file is located elsewhere, you can change the path
 
-const trustedOrigins = process.env.TRUSTED_ORIGINS?.split(',') || []
+const trustedOrigins = process.env.TRUSTED_ORIGINS?.split(',') || [] 
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -26,7 +26,7 @@ export const auth = betterAuth({
                     attributes: {
                         httpOnly: true,
                         secure: process.env.NODE_ENV === 'production',
-                        samesite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
                         path: '/',
                     }
             }
