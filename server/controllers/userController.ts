@@ -32,7 +32,7 @@ export const getUserCredits = async(req: Request, res: Response) =>{
         res.json({credits: user?.credits})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+         return res.status(500).json({message: error.message})
     }
 }
 export const createUserProject = async(req: Request, res: Response) =>{
@@ -71,7 +71,7 @@ export const createUserProject = async(req: Request, res: Response) =>{
         res.json({projectId: project.id})
 
         const promptEnhanceResponse = await openai.chat.completions.create({
-            model: "tngtech/deepseek-r1t-chimera:free",
+            model: "gpt-4o-mini",
             messages: [
               {
                 "role": "system",
@@ -93,7 +93,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
               }
             ],
         })
-        const enhancedPrompt = promptEnhanceResponse.choices[0].message.content;
+        const enhancedPrompt = promptEnhanceResponse.choices[0].message.content || initial_prompt;
         await prisma.conversation.create({
             data: {
                 role: 'assistant',
@@ -109,7 +109,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
             }
         })
         const codeGenerationResponse = await openai.chat.completions.create({
-            model: "tngtech/deepseek-r1t-chimera:free",
+            model: "gpt-4o-mini",
             messages: [
               {
                 "role": "system",
@@ -214,7 +214,7 @@ You are an expert web developer. Create a complete, production-ready, single-pag
             data: {credits: {increment: 5}}
         })
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 export const getUserProject = async(req: Request, res: Response) =>{
@@ -235,10 +235,10 @@ export const getUserProject = async(req: Request, res: Response) =>{
        })
 
 
-        res.json({project})
+        return res.json({project})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 export const getUserProjects = async(req: Request, res: Response) =>{
@@ -257,7 +257,7 @@ export const getUserProjects = async(req: Request, res: Response) =>{
         res.json({projects})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 export const togglePublish = async(req: Request, res: Response) =>{
@@ -285,7 +285,7 @@ export const togglePublish = async(req: Request, res: Response) =>{
         res.json({message: project.isPublished ? 'Project Unpublished' : 'Project Published Successfully'})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 export const purchaseCredits = async(req: Request, res: Response) =>{
@@ -344,6 +344,6 @@ export const purchaseCredits = async(req: Request, res: Response) =>{
 
    } catch (error: any) {
         console.log(error.code || error.message)
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
    }
 }

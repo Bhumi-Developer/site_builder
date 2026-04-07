@@ -57,7 +57,7 @@ export const makeRevision = async(req: Request, res: Response) =>{
           data: {credits: {decrement: 5}}
       })
       const promptEnhanceResponse = await openai.chat.completions.create({
-          model: "tngtech/deepseek-r1t-chimera:free",
+          model: "gpt-4o-mini",
           messages: [
             {
               "role": "system",
@@ -94,7 +94,7 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
       })
       
       const codeGenerationResponse = await openai.chat.completions.create({
-          model: "tngtech/deepseek-r1t-chimera:free",
+          model: "gpt-4o-mini",
           messages: [
             {
               "role": "system",
@@ -180,14 +180,14 @@ You are an expert web developer.
         }
       });
 
-      res.json({message: "Changes made successfully"})
+      return res.json({message: "Changes made successfully"})
   } catch (error: any) {
       await prisma.user.update({
           where: {id: userId},
           data: {credits: {increment: 5}}
       })
       console.log(error.code || error.message);
-      res.status(500).json({message: error.message})
+      return res.status(500).json({message: error.message})
   }
 }
 
@@ -232,7 +232,7 @@ export const rollbackToVersion = async(req: Request, res: Response) =>{
         res.json({message: 'Version rolled back'})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 
@@ -251,7 +251,7 @@ export const deleteProject = async(req: Request, res: Response) =>{
         res.json({message: 'Project deleted Successfully'})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 
@@ -271,10 +271,10 @@ export const getProjectPreview = async(req: Request, res: Response) =>{
        if(!project){
         return res.status(404).json({message: 'Project not found'})
        }
-        res.json({project})
+        return res.json({project})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 
@@ -291,7 +291,7 @@ export const getPublishedProjects = async(req: Request, res: Response) =>{
         res.json({projects})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 
@@ -307,7 +307,7 @@ export const getProjectById = async(req: Request, res: Response) =>{
         res.json({code: project.current_code})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }
 
@@ -338,6 +338,6 @@ export const saveProjectCode = async(req: Request, res: Response) =>{
         res.json({message: "Project saved successfully"})
     } catch (error: any) {
         console.log(error.code || error.message);
-        res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message})
     }
 }

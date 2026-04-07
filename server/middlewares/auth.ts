@@ -14,6 +14,6 @@ export const protect = async (req:Request, res:Response, next: NextFunction) =>{
         next()
     } catch (error: any) {
         console.log(error)
-        res.status(401).json({message: error.code || error.message})
+        return res.status(401).json({message: error.code || error.message})
     }
 }
