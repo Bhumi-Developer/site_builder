@@ -14,7 +14,7 @@ const port = 3000;
 
 app.use(cors(
    {
-        origin:  "site-builder-c8qs.vercel.app",
+        origin:  "https://site-builder-c8qs.vercel.app",
         credentials: true,
     }
 ))
