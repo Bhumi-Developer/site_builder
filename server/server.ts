@@ -11,12 +11,10 @@ const app = express();
 
 const port = 3000;
 
-const url = process.env.TRUSTED_ORIGINS
-console.log(url)
 
 app.use(cors(
    {
-        origin: url,
+        origin:  process.env.TRUSTED_ORIGINS,
         credentials: true,
     }
 ))
