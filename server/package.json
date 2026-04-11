@@ -16,10 +16,12 @@
     "@prisma/client": "^6.19.2",
     "better-auth": "^1.4.10",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "openai": "^6.16.0",
     "pg": "^8.17.2",
+    "razorpay": "^2.9.6",
     "stripe": "^20.2.0"
   },
   "devDependencies": {

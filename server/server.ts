@@ -5,7 +5,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import userRouter from './routes/userRoutes.js';
 import projectRouter from './routes/projectRoutes.js';
-import { stripeWebhook } from './controllers/stripeWebhooks.js';
+import { razorpayWebhook } from './controllers/stripeWebhooks.js';
 
 const app = express();
 
@@ -14,11 +14,12 @@ const port = process.env.PORT || 3000;
 
 app.use(cors(
    {
-        origin:  "https://site-builder-c8qs.vercel.app",
+        origin: process.env.TRUSTED_ORIGINS ||
+         "https://site-builder-c8qs.vercel.app",
         credentials: true,
     }
 ))
-app.post('/api/stripe',express.raw({type: 'application/json'}), stripeWebhook)
+// app.post('/api/webhook/razorpay', express.raw({ type: 'application/json' }), razorpayWebhook)
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
 

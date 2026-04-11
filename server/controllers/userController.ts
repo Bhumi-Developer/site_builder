@@ -3,6 +3,8 @@ import prisma from "../lib/prisma.js";
 import openai from "../config/openai.js";
 import { getSingleString } from "../types/helper.js";
 import Stripe from "stripe";
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 function extractPureHTML(aiText: string): string {
     if (!aiText) {
@@ -288,62 +290,244 @@ export const togglePublish = async(req: Request, res: Response) =>{
         return res.status(500).json({message: error.message})
     }
 }
-export const purchaseCredits = async(req: Request, res: Response) =>{
-   try {
-    interface Plan {
-        credits: number;
-        amount: number;
-    }
-    const plans = {
-        basic: {credits: 100, amount: 5},
-        pro: {credits: 400, amount: 19},
-        enterprise: {credits: 1000, amount: 49}
-    }
-    const userId = req.userId
-    const {planId} = req.body as {planId: keyof typeof plans}
-    const origin = req.headers.origin as string
+// export const purchaseCredits = async(req: Request, res: Response) =>{
+//    try {
+//     interface Plan {
+//         credits: number;
+//         amount: number;
+//     }
+//     const plans = {
+//         basic: {credits: 100, amount: 5},
+//         pro: {credits: 400, amount: 19},
+//         enterprise: {credits: 1000, amount: 49}
+//     }
+//     const userId = req.userId
+//     const {planId} = req.body as {planId: keyof typeof plans}
+//     const origin = req.headers.origin as string
 
-    const plan: Plan = plans[planId]
-    if(!plan){
-        return res.status(404).json({message: 'plan not found'})
-        }
+//     const plan: Plan = plans[planId]
+//     if(!plan){
+//         return res.status(404).json({message: 'plan not found'})
+//         }
 
-        const transaction = await prisma.transaction.create({
-            data:{
-                userId: userId!,
-                planId: req.body.planId,
-                amount: plan.amount,
-                credits: plan.credits,
-            }
-        })
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+//         const transaction = await prisma.transaction.create({
+//             data:{
+//                 userId: userId!,
+//                 planId: req.body.planId,
+//                 amount: plan.amount,
+//                 credits: plan.credits,
+//             }
+//         })
+//         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-        const session = await stripe.checkout.sessions.create({
-            success_url: `${origin}/loading`,
-            cancel_url: `${origin}`,
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: `AiSiteBuider - ${plan.credits} credits`
-                        },
-                        unit_amount: Math.floor(transaction.amount) * 100
-                    },
-                    quantity: 1
-                },
-            ],
-            mode: 'payment',
-            metadata: {
-                transactionId: transaction.id,
-                appId: 'ai-site-builder'
-            },
-            expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-        })
-        res.json({payment_link: session.url})
+//         const session = await stripe.checkout.sessions.create({
+//             success_url: `${origin}/loading`,
+//             cancel_url: `${origin}`,
+//             line_items: [
+//                 {
+//                     price_data: {
+//                         currency: 'usd',
+//                         product_data: {
+//                             name: `AiSiteBuider - ${plan.credits} credits`
+//                         },
+//                         unit_amount: Math.floor(transaction.amount) * 100
+//                     },
+//                     quantity: 1
+//                 },
+//             ],
+//             mode: 'payment',
+//             metadata: {
+//                 transactionId: transaction.id,
+//                 appId: 'ai-site-builder'
+//             },
+//             expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+//         })
+//         res.json({payment_link: session.url})
 
-   } catch (error: any) {
-        console.log(error.code || error.message)
-        return res.status(500).json({message: error.message})
-   }
+//    } catch (error: any) {
+//         console.log(error.code || error.message)
+//         return res.status(500).json({message: error.message})
+//    }
+// }
+
+
+
+// const prisma = new PrismaClient();
+
+interface Plan {
+  credits: number;
+  amount: number;
+  amountInPaise: number;
 }
+
+const plans = {
+  basic: { credits: 100, amount: 5, amountInPaise: 500 },
+  pro: { credits: 400, amount: 19, amountInPaise: 1900 },
+  enterprise: { credits: 1000, amount: 49, amountInPaise: 4900 }
+};
+
+export const purchaseCredits = async (req: Request, res: Response) => {
+  try {
+      const userId = req.userId;
+      const { planId } = req.body as { planId: keyof typeof plans };
+
+      if (!userId) {
+          return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const plan: Plan = plans[planId];
+      if (!plan) {
+          return res.status(404).json({ message: 'Plan not found' });
+      }
+
+      const user = await prisma.user.findUnique({
+          where: { id: userId }
+      });
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Create transaction record
+      const transaction = await prisma.transaction.create({
+          data: {
+              userId: userId,
+              planId: planId,
+              amount: plan.amount,
+              credits: plan.credits,
+              isPaid: false
+          }
+      });
+
+      const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID as string,
+          key_secret: process.env.RAZORPAY_KEY_SECRET as string,
+      });
+
+      const receiptId = `R${Date.now()}`;
+
+      const options = {
+          amount: plan.amountInPaise,
+          currency: 'INR',
+          receipt: receiptId,
+          payment_capture: 1,
+          notes: {
+              transactionId: transaction.id, // Store transaction ID in notes
+              userId: userId,
+              planId: planId,
+              credits: plan.credits
+          }
+      };
+
+      const order = await razorpay.orders.create(options);
+
+      // ✅ Don't try to update razorpayOrderId if field doesn't exist
+      // Just return the order details to frontend
+      
+      res.json({
+          success: true,
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID,
+          transactionId: transaction.id,
+          planId: planId,
+          credits: plan.credits
+      });
+
+  } catch (error: any) {
+      console.error('Purchase credits error:', error);
+      
+      if (error.error) {
+          return res.status(400).json({ 
+              message: error.error.description || 'Payment initialization failed' 
+          });
+      }
+      
+      return res.status(500).json({ 
+          message: error.message || 'Internal server error' 
+      });
+  }
+};
+
+// server/controllers/userController.ts (में verifyPayment function add करें)
+
+export const verifyPayment = async (req: Request, res: Response) => {
+  try {
+      const {
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          transactionId
+      } = req.body;
+
+      console.log('Verifying payment:', { razorpay_order_id, razorpay_payment_id, transactionId });
+
+      // Verify signature
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto
+          .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET as string)
+          .update(body.toString())
+          .digest("hex");
+
+      const isAuthentic = expectedSignature === razorpay_signature;
+
+      if (!isAuthentic) {
+          return res.status(400).json({
+              success: false,
+              message: 'Payment verification failed - Invalid signature'
+          });
+      }
+
+      // Find transaction
+      const transaction = await prisma.transaction.findUnique({
+          where: { id: transactionId }
+      });
+
+      if (!transaction) {
+          return res.status(404).json({
+              success: false,
+              message: 'Transaction not found'
+          });
+      }
+
+      // Check if already processed
+      if (transaction.isPaid) {
+          return res.status(400).json({
+              success: false,
+              message: 'Transaction already processed'
+          });
+      }
+
+      // Update transaction as paid
+      await prisma.transaction.update({
+          where: { id: transactionId },
+          data: {
+              isPaid: true
+          }
+      });
+
+      // Add credits to user
+      const updatedUser = await prisma.user.update({
+          where: { id: transaction.userId },
+          data: {
+              credits: {
+                  increment: transaction.credits
+              }
+          }
+      });
+
+      return res.status(200).json({
+          success: true,
+          message: 'Payment verified and credits added successfully',
+          credits: updatedUser.credits
+      });
+
+  } catch (error: any) {
+      console.error('Verification error:', error);
+      return res.status(500).json({ 
+          success: false,
+          message: error.message || 'Internal server error' 
+      });
+  }
+};
