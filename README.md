@@ -19,7 +19,7 @@ This is a full-stack web application that allows users to create, manage, and pu
 - **Framework:** Express.js
 - **Database:** PostgreSQL with Prisma ORM
 - **Authentication:** better-auth
-- **Payments:** Stripe
+- **Payments:** Razorpay
 - **AI:** OpenAI
 - **TypeScript**
 
@@ -34,7 +34,7 @@ This is a full-stack web application that allows users to create, manage, and pu
 - AI-assisted website generation
 - Credit-based system for project creation
 - Project versioning and rollbacks
-- Stripe integration for payments
+- Razorpay integration for payments
 - Community page to view published projects
 
 ## Getting Started
@@ -120,7 +120,6 @@ A brief description of the available API endpoints.
 
 - `GET /`: Server status.
 - `POST /api/auth/{*any}`: Authentication endpoint.
-- `POST /api/stripe`: Stripe webhook endpoint.
 
 ### User Routes (`/api/user`)
 
@@ -130,6 +129,7 @@ A brief description of the available API endpoints.
 - `GET /projects`: Get all projects for the user.
 - `GET /publish-toggle/:projectId`: Toggle the publish status of a project.
 - `POST /purchase-credits`: Purchase credits.
+- `POST /verify-payment`: Verify Payments.
 
 ### Project Routes (`/api/project`)
 
